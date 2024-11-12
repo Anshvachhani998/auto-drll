@@ -34,10 +34,6 @@ async def delete_group_messages(client, message):
         print(f"Error deleting message from group: {e}")
 
 # This function ensures the bot is responsive for health checks
-async def health_check():
-    # This is where you'd have to keep the app running.
-    while True:
-        await asyncio.sleep(60)
 
-if name == "__main__":
+if __name__ == "__main__":
     app.run()
