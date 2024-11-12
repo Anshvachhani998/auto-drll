@@ -21,7 +21,7 @@ async def start(client, message):
 @app.on_message(filters.chat(CHANNEL_IDS))
 async def delete_channel_messages(client, message):
     try:
-        await asyncio.sleep(14400)
+        await asyncio.sleep(14400)  # Wait for 4 hours
         await message.delete()
         print(f"Deleted message from channel: {message.text}")
     except Exception as e:
@@ -30,15 +30,11 @@ async def delete_channel_messages(client, message):
 @app.on_message(filters.chat(GROUP_IDS))
 async def delete_group_messages(client, message):
     try:
-        await asyncio.sleep(300)
+        await asyncio.sleep(300)  # Wait for 5 minutes
         await message.delete()
         print(f"Deleted message from group: {message.text}")
     except Exception as e:
         print(f"Error deleting message from group: {e}")
-
-# Run the bot in a separate thread
-def run_bot():
-    app.run()
 
 # Health check handler for aiohttp
 async def health_check(request):
@@ -56,12 +52,18 @@ async def web_server():
     await site.start()
     print(f"Health check server started at http://{bind_address}:{port}")
     while True:
-        await asyncio.sleep(3600)  # Keep running
+        await asyncio.sleep(3600)  # Keep running to serve the health check
+
+# Main function to run bot and web server concurrently
+async def main():
+    # Create tasks for both the bot and the web server
+    bot_task = asyncio.create_task(app.run())
+    web_task = asyncio.create_task(web_server())
+
+    # Wait for both tasks to finish (they run indefinitely)
+    await bot_task
+    await web_task
 
 if __name__ == "__main__":
-    # Start the bot in a separate thread
-    bot_thread = threading.Thread(target=run_bot)
-    bot_thread.start()
-
-    # Run the aiohttp server for health checks
-    asyncio.run(web_server())
+    # Run both the bot and the web server in an asyncio event loop
+    asyncio.run(main())
