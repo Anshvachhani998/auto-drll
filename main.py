@@ -40,9 +40,11 @@ async def health_check():
         await asyncio.sleep(60)
 
 if __name__ == "__main__":
-    # Ensure the bot starts properly
     loop = asyncio.get_event_loop()
-    loop.create_task(app.start())  # Start the bot asynchronously
-    loop.create_task(health_check())  # Keep running health check
+    
+    # Directly running the bot without create_task
+    app.run()  # This starts the Pyrogram bot
+
+    loop.create_task(health_check())  # Keep running health check task
     
     loop.run_forever()  # Keep the loop running to handle tasks
