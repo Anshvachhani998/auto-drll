@@ -1,7 +1,7 @@
 from pyrogram import Client, filters
-from flask import Flask
-import threading
+from aiohttp import web
 import asyncio
+import threading
 
 API_ID = "21684037"
 API_HASH = "cc4dda353688d66c94af69ca48a87bdb"
@@ -10,16 +10,10 @@ BOT_TOKEN = "8164925669:AAFrDltyWMahWLEtvnVbdx8-s1PjC-DpL8E"
 CHANNEL_IDS = [-1002224233447]
 GROUP_IDS = [-1002068352969, -1001930038276, -1001983504851, -1002003442851, -1001719021558]
 
-# Initialize Flask app for health checks
-web_app = Flask(__name__)
-
-@web_app.route("/")
-def health_check():
-    return "Bot is running", 200
-
 # Initialize Pyrogram Client
 app = Client("ansh_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
+# Define bot commands
 @app.on_message(filters.command("start"))
 async def start(client, message):
     await message.reply("Hello! Welcome to the bot.")
@@ -46,10 +40,28 @@ async def delete_group_messages(client, message):
 def run_bot():
     app.run()
 
+# Health check handler for aiohttp
+async def health_check(request):
+    return web.Response(text="Bot is running")
+
+# Function to set up the aiohttp web server
+async def web_server():
+    server = web.Application()
+    server.router.add_get("/", health_check)
+    runner = web.AppRunner(server)
+    await runner.setup()
+    bind_address = "0.0.0.0"
+    port = 8000
+    site = web.TCPSite(runner, bind_address, port)
+    await site.start()
+    print(f"Health check server started at http://{bind_address}:{port}")
+    while True:
+        await asyncio.sleep(3600)  # Keep running
+
 if __name__ == "__main__":
-    # Start the bot thread
+    # Start the bot in a separate thread
     bot_thread = threading.Thread(target=run_bot)
     bot_thread.start()
 
-    # Run the Flask app (for health checks) on Koyeb's default port
-    web_app.run(host="0.0.0.0", port=8000)
+    # Run the aiohttp server for health checks
+    asyncio.run(web_server())
