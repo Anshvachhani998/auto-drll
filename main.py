@@ -37,13 +37,18 @@ async def delete_group_messages(client, message):
     except Exception as e:
         print(f"Error deleting message from group: {e}")
 
-
+# Health check route for the web server
 @web_app.route('/')
 def health_check():
     return "Bot is running!", 200
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
+    # Run both the bot and the web server
     from threading import Thread
+
+    # Start the bot
     bot_thread = Thread(target=app.run)
     bot_thread.start()
+
+    # Start the Flask app on port 8000
     web_app.run(host="0.0.0.0", port=8000)
