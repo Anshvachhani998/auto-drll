@@ -39,5 +39,5 @@ async def health_check():
     while True:
         await asyncio.sleep(60)
 
-if name == "main":
+if name == "__main__":
     app.run()
