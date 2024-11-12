@@ -1,5 +1,5 @@
+
 from pyrogram import Client, filters
-import os
 import asyncio
 from pyrogram.enums import ChatMembersFilter
 
@@ -35,8 +35,4 @@ async def delete_group_messages(client, message):
         print(f"Error deleting message from group: {e}")
 
 if __name__ == "__main__":
-    # Use the correct port from environment if available
-    port = int(os.environ.get("PORT", 8000))
-    
-    # Start the Pyrogram client asynchronously without blocking
     app.run()
