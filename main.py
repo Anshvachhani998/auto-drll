@@ -1,7 +1,6 @@
+import asyncio
 from pyrogram import Client, filters
 import os
-import asyncio
-from pyrogram.enums import ChatMembersFilter
 
 API_ID = "21684037"
 API_HASH = "cc4dda353688d66c94af69ca48a87bdb"
@@ -19,7 +18,7 @@ async def start(client, message):
 @app.on_message(filters.chat(CHANNEL_IDS))
 async def delete_channel_messages(client, message):
     try:
-        await asyncio.sleep(14400)  
+        await asyncio.sleep(14400)  # Simulate waiting time
         await message.delete()
         print(f"Deleted message from channel: {message.text}") 
     except Exception as e:
@@ -28,15 +27,22 @@ async def delete_channel_messages(client, message):
 @app.on_message(filters.chat(GROUP_IDS))
 async def delete_group_messages(client, message):
     try:
-        await asyncio.sleep(300)
+        await asyncio.sleep(300)  # Simulate waiting time
         await message.delete()
         print(f"Deleted message from group: {message.text}")
     except Exception as e:
         print(f"Error deleting message from group: {e}")
 
+# This function ensures the bot is responsive for health checks
+async def health_check():
+    # This is where you'd have to keep the app running.
+    while True:
+        await asyncio.sleep(60)
+
 if __name__ == "__main__":
-    # Use the correct port from environment if available
-    port = int(os.environ.get("PORT", 8000))
+    # Ensure the bot starts properly
+    loop = asyncio.get_event_loop()
+    loop.create_task(app.start())  # Start the bot asynchronously
+    loop.create_task(health_check())  # Keep running health check
     
-    # Start the Pyrogram client asynchronously without blocking
-    app.run()
+    loop.run_forever()  # Keep the loop running to handle tasks
