@@ -4,7 +4,7 @@ import pyrogram
 from pyrogram import Client, filters, enums
 from pyrogram.errors import FloodWait, UserIsBlocked, InputUserDeactivated, UserAlreadyParticipant, InviteHashExpired, UsernameNotOccupied
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message 
-from config import API_ID, API_HASH, ERROR_MESSAGE
+from config import API_ID, API_HASH
 
 # start command
 @Client.on_message(filters.command(["start"]))
