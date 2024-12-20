@@ -110,20 +110,26 @@ async def delete_messages(client: Client, message: Message):
         # Print the message object to see its structure
         print(f"Message object: {message}")
 
-        # Check if the message object has 'id'
+        # Check if the message object has 'id' or 'reply_to_message' 
+        # (in case it's a reply to another message)
         if hasattr(message, 'id'):
-            # Initialize user client with the session string
-            user_client = Client(":memory:", session_string=user_data, api_id=API_ID, api_hash=API_HASH)
-            await user_client.connect()
-
-            # Delete the incoming message using message.id
-            await user_client.delete_messages(message.chat.id, message.id)
-            print(f"Message deleted: {message.text}")
-
-            # Disconnect after deleting the message
-            await user_client.disconnect()
+            message_id = message.id
+        elif hasattr(message, 'reply_to_message') and message.reply_to_message:
+            message_id = message.reply_to_message.id
         else:
-            print("Message does not have id, cannot delete.")
+            print("Message does not have id or reply_to_message, cannot delete.")
+            return
+
+        # Initialize user client with the session string
+        user_client = Client(":memory:", session_string=user_data, api_id=API_ID, api_hash=API_HASH)
+        await user_client.connect()
+
+        # Delete the incoming message using message_id
+        await user_client.delete_messages(message.chat.id, message_id)
+        print(f"Message deleted: {message.text}")
+
+        # Disconnect after deleting the message
+        await user_client.disconnect()
 
     except FloodWait as e:
         # Handle FloodWait exception if rate limited
@@ -131,3 +137,4 @@ async def delete_messages(client: Client, message: Message):
         await asyncio.sleep(e.x)  # Wait for the specified time before retrying
     except Exception as e:
         print(f"Error deleting message: {e}")
+
