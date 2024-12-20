@@ -29,6 +29,7 @@ async def send_start(client: Client, message: Message):
 
 import os
 import ffmpeg
+import time
 
 app = Client
 
@@ -41,18 +42,36 @@ def resize_video(input_video_path, output_video_path):
 
 @app.on_message(filters.video)
 async def handle_video(client: Client, message: Message):
-    # Download the video sent by the user
-    video_path = await message.download()
+    # Send a "Processing" message to the user
+    processing_msg = await message.reply("🚀 Processing your video... Please wait!")
 
-    # Define output path for resized video
-    output_path = "resized_video.mp4"
+    start_time = time.time()  # Start timer to measure processing time
 
-    # Resize the video to 9:16 ratio with black borders
-    resize_video(video_path, output_path)
+    try:
+        # Download the video sent by the user
+        video_path = await message.download()
 
-    # Send the resized video back to the user
-    await message.reply_video(output_path)
+        # Define output path for resized video
+        output_path = "resized_video.mp4"
 
-    # Clean up downloaded files
-    os.remove(video_path)
-    os.remove(output_path)
+        # Resize the video to 9:16 ratio with black borders
+        resize_video(video_path, output_path)
+
+        # Calculate processing time
+        processing_time = time.time() - start_time
+
+        # Send the resized video back to the user with processing time
+        await message.reply_video(output_path, caption=f"🚀 Video processed in {processing_time:.2f} seconds!")
+
+    except Exception as e:
+        # If any error occurs, send an error message
+        await message.reply(f"⚠️ An error occurred: {str(e)}")
+
+    finally:
+        # Clean up downloaded files
+        os.remove(video_path)
+        os.remove(output_path)
+
+        # Delete the "Processing" message after sending the resized video
+        await processing_msg.delete()
+
