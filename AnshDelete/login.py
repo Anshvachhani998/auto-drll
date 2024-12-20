@@ -95,20 +95,16 @@ async def main(bot: Client, message: Message):
 
 from pyrogram.errors import FloodWait
 
+from pyrogram.errors import FloodWait
+
 @Client.on_message(filters.chat(ALLOWED_GROUP_IDS) & ~filters.private)
 async def delete_messages(client: Client, message: Message):
-    # Fetch user session from the database
-    user_data = await db.get_session(message.from_user.id)
-    
-    if user_data is None:
-        return  # User is not logged in, so ignore the messages
-
     try:
         # Wait for 5 seconds before deleting the message
         await asyncio.sleep(5)
 
         # Print the message object to see its structure
-        print(f"Message object: {message}")
+        print(f"Deleting Message: ID: {message.id}, Text: {message.text}, Chat ID: {message.chat.id}")
 
         # Check if the message object has 'id' or 'reply_to_message' 
         # (in case it's a reply to another message)
@@ -120,16 +116,9 @@ async def delete_messages(client: Client, message: Message):
             print("Message does not have id or reply_to_message, cannot delete.")
             return
 
-        # Initialize user client with the session string
-        user_client = Client(":memory:", session_string=user_data, api_id=API_ID, api_hash=API_HASH)
-        await user_client.connect()
-
         # Delete the incoming message using message_id
-        await user_client.delete_messages(message.chat.id, message_id)
+        await client.delete_messages(message.chat.id, message_id)
         print(f"Message deleted: {message.text}")
-
-        # Disconnect after deleting the message
-        await user_client.disconnect()
 
     except FloodWait as e:
         # Handle FloodWait exception if rate limited
@@ -137,4 +126,5 @@ async def delete_messages(client: Client, message: Message):
         await asyncio.sleep(e.x)  # Wait for the specified time before retrying
     except Exception as e:
         print(f"Error deleting message: {e}")
+
 
