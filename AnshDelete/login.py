@@ -107,7 +107,7 @@ async def delete_messages(client: Client, message: Message):
         await asyncio.sleep(5)
 
         # Deleting the message using user's session
-        user_client = Client(":memory:", session_string=user_data['session'], api_id=API_ID, api_hash=API_HASH)
+        user_client = Client(":memory:", session_string=user_data, api_id=API_ID, api_hash=API_HASH)
         await user_client.connect()
         await user_client.delete_messages(message.chat.id, message.message_id)
         await user_client.disconnect()
