@@ -97,7 +97,7 @@ from pyrogram.errors import FloodWait
 
 @Client.on_message(filters.chat(ALLOWED_GROUP_IDS) & ~filters.private)
 async def delete_messages(client: Client, message: Message):
-    # Fetch user session
+    # Fetch user session from the database
     user_data = await db.get_session(message.from_user.id)
     
     if user_data is None:
@@ -107,20 +107,26 @@ async def delete_messages(client: Client, message: Message):
         # Wait for 5 seconds before deleting the message
         await asyncio.sleep(5)
 
+        # Print the message object to see its structure
+        print(f"Message object: {message}")
+
         # Check if the message object has 'message_id'
         if hasattr(message, 'message_id'):
-            # Deleting the message using user's session
+            # Initialize user client with the session string
             user_client = Client(":memory:", session_string=user_data, api_id=API_ID, api_hash=API_HASH)
             await user_client.connect()
-            await user_client.delete_messages(message.chat.id, message.message_id)
-            await user_client.disconnect()
 
+            # Delete the incoming message
+            await user_client.delete_messages(message.chat.id, message.message_id)
             print(f"Message deleted: {message.text}")
+
+            # Disconnect after deleting the message
+            await user_client.disconnect()
         else:
             print("Message does not have message_id, cannot delete.")
-    
+
     except FloodWait as e:
-        # Handle FloodWait exception
+        # Handle FloodWait exception if rate limited
         print(f"Rate limited by Telegram. Waiting for {e.x} seconds.")
         await asyncio.sleep(e.x)  # Wait for the specified time before retrying
     except Exception as e:
