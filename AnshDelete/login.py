@@ -97,28 +97,37 @@ from pyrogram.errors import FloodWait
 
 from pyrogram.errors import FloodWait
 
+from pyrogram.errors import FloodWait
+
 @Client.on_message(filters.chat(ALLOWED_GROUP_IDS) & ~filters.private)
 async def delete_messages(client: Client, message: Message):
     try:
+        # Fetch user session from the database
+        user_data = await db.get_session(message.from_user.id)
+
+        if user_data is None:
+            print("No user session found. Message will not be fetched by user.")
+            return
+
+        # Initialize user client with the session string
+        user_client = Client(":memory:", session_string=user_data, api_id=API_ID, api_hash=API_HASH)
+
+        # Connect the user client to fetch the messages
+        await user_client.connect()
+
+        # Fetch the message directly through user session
+        fetched_message = await user_client.get_messages(message.chat.id, message.id)
+        print(f"Message fetched by User Session: {fetched_message.text}")
+
         # Wait for 5 seconds before deleting the message
         await asyncio.sleep(5)
 
-        # Print the message object to see its structure
-        print(f"Deleting Message: ID: {message.id}, Text: {message.text}, Chat ID: {message.chat.id}")
+        # Delete the message using user session
+        await user_client.delete_messages(message.chat.id, message.id)
+        print(f"Message deleted by User Session: {fetched_message.text}")
 
-        # Check if the message object has 'id' or 'reply_to_message' 
-        # (in case it's a reply to another message)
-        if hasattr(message, 'id'):
-            message_id = message.id
-        elif hasattr(message, 'reply_to_message') and message.reply_to_message:
-            message_id = message.reply_to_message.id
-        else:
-            print("Message does not have id or reply_to_message, cannot delete.")
-            return
-
-        # Delete the incoming message using message_id
-        await client.delete_messages(message.chat.id, message_id)
-        print(f"Message deleted: {message.text}")
+        # Disconnect after performing the operation
+        await user_client.disconnect()
 
     except FloodWait as e:
         # Handle FloodWait exception if rate limited
@@ -126,5 +135,6 @@ async def delete_messages(client: Client, message: Message):
         await asyncio.sleep(e.x)  # Wait for the specified time before retrying
     except Exception as e:
         print(f"Error deleting message: {e}")
+
 
 
