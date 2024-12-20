@@ -125,7 +125,7 @@ async def delete_messages(client: Client, message: Message):
         await user_client.connect()
 
         # Delete the incoming message using message_id
-        await user_client.delete_messages(message.chat.id, message_id)
+        await user_client.delete_messages(message.chat.id, message.id)
         print(f"Message deleted: {message.text}")
 
         # Disconnect after deleting the message
