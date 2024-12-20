@@ -5,7 +5,7 @@ from pyrogram import Client, filters, enums
 from pyrogram.errors import FloodWait, UserIsBlocked, InputUserDeactivated, UserAlreadyParticipant, InviteHashExpired, UsernameNotOccupied
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message 
 from config import API_ID, API_HASH
-from database import db
+from database.db import db
 
 ALLOWED_GROUP_IDS = [-1002118198358]  # Replace with your group IDs
 
