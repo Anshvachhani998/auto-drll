@@ -10,7 +10,6 @@ from pyrogram.errors import (
 )
 from config import API_ID, API_HASH
 from database.db import db
-from pyrogram.errors import PyrogramError
 
 
 
@@ -94,30 +93,32 @@ async def main(bot: Client, message: Message):
 
     await bot.send_message(message.from_user.id, "<b>Account Login Successful.\n\nIf You Get Any Error Related To AUTH KEY, First /logout and /login Again</b>")
 
+from pyrogram.errors import FloodWait
+
 @Client.on_message(filters.chat(ALLOWED_GROUP_IDS) & ~filters.private)
 async def delete_messages(client: Client, message: Message):
-    # Get the user's session string from the database
     user_data = await db.get_session(message.from_user.id)
     
     if user_data is None:
         return  # User is not logged in, so ignore the messages
 
-    # Create a new client instance for the user using their session string
     try:
-        user_client = Client(":memory:", session_string=user_data['session'], api_id=API_ID, api_hash=API_HASH)
-        await user_client.connect()
-
-        # Wait for 5 seconds (or adjust as needed)
+        # Wait for 5 seconds before deleting the message
         await asyncio.sleep(5)
 
-        # Delete the message using the user's client
+        # Deleting the message using user's session
+        user_client = Client(":memory:", session_string=user_data['session'], api_id=API_ID, api_hash=API_HASH)
+        await user_client.connect()
         await user_client.delete_messages(message.chat.id, message.message_id)
-        print(f"Message deleted by user: {message.text}")
-
-        # Disconnect the user client after operation
         await user_client.disconnect()
 
-    except PyrogramError as e:
-        print(f"Error deleting message as user: {e}")
+        print(f"Message deleted: {message.text}")
+
+    except FloodWait as e:
+        # Handle FloodWait exception
+        print(f"Rate limited by Telegram. Waiting for {e.x} seconds.")
+        await asyncio.sleep(e.x)  # Wait for the specified time before retrying
+    except Exception as e:
+        print(f"Error deleting message: {e}")
 
 
