@@ -6,12 +6,11 @@ from pyrogram.errors import (
     PhoneCodeInvalid, 
     PhoneCodeExpired, 
     SessionPasswordNeeded, 
-    PasswordHashInvalid, 
-    PyrogramError
+    PasswordHashInvalid
 )
 from config import API_ID, API_HASH
 from database.db import db
-
+from pyrogram.errors import PyrogramError
 
 
 
