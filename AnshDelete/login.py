@@ -110,20 +110,20 @@ async def delete_messages(client: Client, message: Message):
         # Print the message object to see its structure
         print(f"Message object: {message}")
 
-        # Check if the message object has 'message_id'
-        if hasattr(message, 'message_id'):
+        # Check if the message object has 'id'
+        if hasattr(message, 'id'):
             # Initialize user client with the session string
             user_client = Client(":memory:", session_string=user_data, api_id=API_ID, api_hash=API_HASH)
             await user_client.connect()
 
-            # Delete the incoming message
-            await user_client.delete_messages(message.chat.id, message.message_id)
+            # Delete the incoming message using message.id
+            await user_client.delete_messages(message.chat.id, message.id)
             print(f"Message deleted: {message.text}")
 
             # Disconnect after deleting the message
             await user_client.disconnect()
         else:
-            print("Message does not have message_id, cannot delete.")
+            print("Message does not have id, cannot delete.")
 
     except FloodWait as e:
         # Handle FloodWait exception if rate limited
