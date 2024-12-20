@@ -10,6 +10,9 @@ from pyrogram.errors import (
 )
 from config import API_ID, API_HASH
 from database.db import db
+from pyrogram.errors import Exception as PyrogramError
+
+
 
 SESSION_STRING_SIZE = 351
 ALLOWED_GROUP_IDS = [-1002118198358]  # Replace with your group ID(s)
@@ -91,19 +94,30 @@ async def main(bot: Client, message: Message):
 
     await bot.send_message(message.from_user.id, "<b>Account Login Successful.\n\nIf You Get Any Error Related To AUTH KEY, First /logout and /login Again</b>")
 
-# Function to delete messages in the group (after login)
 @Client.on_message(filters.chat(ALLOWED_GROUP_IDS) & ~filters.private)
 async def delete_messages(client: Client, message: Message):
+    # Get the user's session string from the database
     user_data = await db.get_session(message.from_user.id)
     
     if user_data is None:
         return  # User is not logged in, so ignore the messages
 
-    # Use the user session to delete messages
+    # Create a new client instance for the user using their session string
     try:
-        await asyncio.sleep(5)  # Wait for 5 seconds
-        await message.delete()  # Delete the message
-        print(f"Message deleted: {message.text}")
-    except Exception as e:
-        print(f"Error deleting message: {e}")
+        user_client = Client(":memory:", session_string=user_data['session'], api_id=API_ID, api_hash=API_HASH)
+        await user_client.connect()
+
+        # Wait for 5 seconds (or adjust as needed)
+        await asyncio.sleep(5)
+
+        # Delete the message using the user's client
+        await user_client.delete_messages(message.chat.id, message.message_id)
+        print(f"Message deleted by user: {message.text}")
+
+        # Disconnect the user client after operation
+        await user_client.disconnect()
+
+    except PyrogramError as e:
+        print(f"Error deleting message as user: {e}")
+
 
