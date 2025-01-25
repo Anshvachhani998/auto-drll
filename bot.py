@@ -15,9 +15,10 @@ class Bot(Client):
         )
 
       
-    async def start(self):
-            
+    async def start(self):    
         await super().start()
+        channel_id = -1002354362427
+        await self.send_message(channel_id, "Bot started successfully!")
         print('Bot Started Powered By Ansh Vachhani')
 
     async def stop(self, *args):
