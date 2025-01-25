@@ -26,7 +26,7 @@ async def start_command(client: Client, message: Message):
     )
 
 # Link Command
-@bot.on_message(filters.text & ~filters.command)
+@bot.on_message(filters.text & ~filters.command("start"))
 async def handle_video_link(client: Client, message: Message):
     url = message.text.strip()
 
@@ -95,6 +95,4 @@ async def quality_callback(client: Client, callback_query):
 
     except Exception as e:
         await callback_query.message.edit_text(f"❌ Failed to download video: {e}")
-
-# Run the bot
 
