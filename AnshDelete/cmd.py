@@ -28,8 +28,7 @@ async def start_command(client: Client, message: Message):
         reply_markup=reply_markup
     )
 
-# Link Command
-@bot.on_message(filters.text & ~filters.command())  # Filters text messages that are not commands
+@bot.on_message(filters.text)
 async def handle_video_link(client: Client, message: Message):
     url = message.text.strip()
 
