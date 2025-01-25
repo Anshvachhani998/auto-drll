@@ -29,7 +29,7 @@ async def start_command(client: Client, message: Message):
     )
 
 # Link Command
-@bot.on_message(filters.text & ~filters.command())
+@bot.on_message(filters.text & ~filters.command(start))
 async def handle_video_link(client: Client, message: Message):
     url = message.text.strip()
 
