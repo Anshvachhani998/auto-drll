@@ -7,5 +7,5 @@ Jinja2==3.0.3
 werkzeug==2.0.2
 itsdangerous==2.0.1
 ffmpeg-python
-yt-dlp==2025.1.25
+yt-dlp==2023.12.31
 
