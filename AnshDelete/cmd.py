@@ -6,7 +6,7 @@ from config import API_ID, API_HASH
 import yt_dlp
 
 # Initialize the bot
-bot = Client("video_downloader", api_id=API_ID, api_hash=API_HASH)
+bot = Client
 
 # Download folder
 DOWNLOAD_FOLDER = "downloads"
