@@ -121,7 +121,7 @@ from config import API_ID, API_HASH
 import yt_dlp
 
 # Initialize the bot
-bot = Client("VideoDownloaderBot", api_id=API_ID, api_hash=API_HASH)
+bot = Client
 
 # Temporary storage for URLs
 URL_STORAGE = {}
@@ -227,5 +227,4 @@ async def quality_callback(client: Client, callback_query):
     except Exception as e:
         await callback_query.message.edit_text(f"❌ An error occurred: {str(e)}")
 
-# Run the bot
 
