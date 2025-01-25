@@ -8,6 +8,9 @@ import yt_dlp
 # Initialize the bot
 bot = Client
 
+# Temporary storage for URLs
+URL_STORAGE = {}
+
 # Download folder
 DOWNLOAD_FOLDER = "downloads"
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
@@ -26,7 +29,7 @@ async def start_command(client: Client, message: Message):
     )
 
 # Link Command
-@bot.on_message(filters.text & ~filters.command("start"))
+@bot.on_message(filters.text & ~filters.command)
 async def handle_video_link(client: Client, message: Message):
     url = message.text.strip()
 
@@ -34,14 +37,18 @@ async def handle_video_link(client: Client, message: Message):
         await message.reply_text("❌ Please send a valid URL.")
         return
 
+    # Generate a unique ID for the URL
+    unique_id = str(len(URL_STORAGE) + 1)
+    URL_STORAGE[unique_id] = url
+
     # Ask for quality selection
     buttons = [
-        [InlineKeyboardButton("144p", callback_data=f"quality_144p|{url}")],
-        [InlineKeyboardButton("240p", callback_data=f"quality_240p|{url}")],
-        [InlineKeyboardButton("360p", callback_data=f"quality_360p|{url}")],
-        [InlineKeyboardButton("480p", callback_data=f"quality_480p|{url}")],
-        [InlineKeyboardButton("720p", callback_data=f"quality_720p|{url}")],
-        [InlineKeyboardButton("1080p", callback_data=f"quality_1080p|{url}")]
+        [InlineKeyboardButton("144p", callback_data=f"quality_144p|{unique_id}")],
+        [InlineKeyboardButton("240p", callback_data=f"quality_240p|{unique_id}")],
+        [InlineKeyboardButton("360p", callback_data=f"quality_360p|{unique_id}")],
+        [InlineKeyboardButton("480p", callback_data=f"quality_480p|{unique_id}")],
+        [InlineKeyboardButton("720p", callback_data=f"quality_720p|{unique_id}")],
+        [InlineKeyboardButton("1080p", callback_data=f"quality_1080p|{unique_id}")]
     ]
     reply_markup = InlineKeyboardMarkup(buttons)
     await message.reply_text(
@@ -53,7 +60,14 @@ async def handle_video_link(client: Client, message: Message):
 @bot.on_callback_query()
 async def quality_callback(client: Client, callback_query):
     data = callback_query.data
-    quality, url = data.split("|")
+    quality, unique_id = data.split("|")
+
+    # Get the original URL using the unique_id
+    url = URL_STORAGE.get(unique_id)
+
+    if not url:
+        await callback_query.message.edit_text("❌ URL not found.")
+        return
 
     # Send processing message
     await callback_query.message.edit_text("Downloading video... Please wait.")
@@ -95,4 +109,3 @@ async def quality_callback(client: Client, callback_query):
 
     except Exception as e:
         await callback_query.message.edit_text(f"❌ Failed to download video: {e}")
-
