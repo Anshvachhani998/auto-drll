@@ -8,4 +8,4 @@ werkzeug==2.0.2
 itsdangerous==2.0.1
 ffmpeg-python
 yt-dlp==2025.1.23.232810.dev0
-
+youtube_dl
