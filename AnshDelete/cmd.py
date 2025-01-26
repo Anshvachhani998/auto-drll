@@ -29,88 +29,64 @@ async def start_command(client: Client, message: Message):
         reply_markup=reply_markup
     )
 
-@bot.on_message(filters.text)
-async def handle_video_link(client: Client, message: Message):
-    url = message.text.strip()
+from pyrogram import Client, filters
+import os
+import youtube_dl
 
-    if not url.startswith("http"):
-        await message.reply_text("❌ Please send a valid URL.")
-        return
-
-    # Generate a unique ID for the URL
-    unique_id = str(len(URL_STORAGE) + 1)
-    URL_STORAGE[unique_id] = url
-
-    # Ask for quality selection
-    buttons = [
-        [InlineKeyboardButton("144p", callback_data=f"quality_144p|{unique_id}")],
-        [InlineKeyboardButton("240p", callback_data=f"quality_240p|{unique_id}")],
-        [InlineKeyboardButton("360p", callback_data=f"quality_360p|{unique_id}")],
-        [InlineKeyboardButton("480p", callback_data=f"quality_480p|{unique_id}")],
-        [InlineKeyboardButton("720p", callback_data=f"quality_720p|{unique_id}")],
-        [InlineKeyboardButton("1080p", callback_data=f"quality_1080p|{unique_id}")]
-    ]
-    reply_markup = InlineKeyboardMarkup(buttons)
-    await message.reply_text(
-        "Please select the video quality:",
-        reply_markup=reply_markup
-    )
-
-# Quality Selection Callback
-@bot.on_callback_query()
-async def quality_callback(client: Client, callback_query):
-    data = callback_query.data
-    quality, unique_id = data.split("|")
-
-    # Get the original URL using the unique_id
-    url = URL_STORAGE.get(unique_id)
-
-    if not url:
-        await callback_query.message.edit_text("❌ URL not found.")
-        return
-
-    # Send processing message
-    await callback_query.message.edit_text("Downloading video... Please wait.")
-
-    # Map quality to format
-    quality_map = {
-        "quality_144p": "144p",
-        "quality_240p": "240p",
-        "quality_360p": "360p",
-        "quality_480p": "480p",
-        "quality_720p": "720p",
-        "quality_1080p": "1080p",
-    }
-    video_quality = quality_map.get(quality, "720p")
-
-    # yt-dlp options
-    ydl_opts = {
-        "format": f"{video_quality}[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
-        "outtmpl": f"{DOWNLOAD_FOLDER}/%(title)s.%(ext)s",
-        "noplaylist": True,
-        "quiet": True
-    }
-
+# Command to download video
+@Client.on_message(filters.command("download") & filters.private)
+async def download_video(client, message):
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(url, download=True)
-            video_title = info_dict.get("title", "video").replace(" ", "_")
-            video_path = os.path.join(DOWNLOAD_FOLDER, f"{video_title}.mp4")
+        # Extracting video URL and quality from command
+        args = message.text.split()
+        if len(args) < 3:
+            await message.reply_text("Usage: /download <video_url> <quality (e.g., 720p)>")
+            return
 
-        # Send the video file to the user
-        await client.send_video(
-            chat_id=callback_query.message.chat.id,
-            video=video_path,
-            caption="Here is your downloaded video!"
-        )
+        video_url = args[1]
+        quality = args[2]
+        download_path = "./downloads"
+        os.makedirs(download_path, exist_ok=True)
 
-        # Clean up the downloaded file
-        os.remove(video_path)
-        await callback_query.message.delete()
+        # Map quality to format
+        video_format = ''
+        if quality == '144p':
+            video_format = 'dash-8'
+        elif quality == '240p':
+            video_format = 'dash-8'
+        elif quality == '360p':
+            video_format = 'dash-7'
+        elif quality == '480p':
+            video_format = 'dash-6'
+        elif quality == '540p':
+            video_format = 'dash-5'
+        elif quality == '720p':
+            video_format = 'dash-3'
+        elif quality == '1080p':
+            video_format = 'dash-1'
+        else:
+            await message.reply_text("Invalid quality. Use one of: 144p, 240p, 360p, 480p, 540p, 720p, 1080p.")
+            return
 
-    except yt_dlp.utils.DownloadError as e:
-        await callback_query.message.edit_text(f"❌ Failed to download video: {e}")
+        ydl_opts = {
+            'format': f'{video_format}[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            'outtmpl': f'{download_path}/%(title)s.%(ext)s',
+        }
+
+        await message.reply_text("Downloading video, please wait...")
+
+        # Download video using youtube-dl
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(video_url, download=True)
+            file_name = ydl.prepare_filename(info_dict)
+
+            # Send the downloaded video to the user
+            await message.reply_video(video=file_name, caption="Here is your video!")
+
+            # Cleanup downloaded file
+            os.remove(file_name)
+
     except Exception as e:
-        await callback_query.message.edit_text(f"❌ An error occurred: {str(e)}")
+        await message.reply_text(f"An error occurred: {str(e)}")
 
 
