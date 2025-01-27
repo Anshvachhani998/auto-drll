@@ -7,5 +7,6 @@ Jinja2==3.0.3
 werkzeug==2.0.2
 ffmpeg-python
 Pillow
+itsdangerous>=2.0.0
 moviepy
 aiofiles
