@@ -4,19 +4,11 @@ import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from config import API_ID, API_HASH
-import yt_dlp
 
 # Initialize the bot
 bot = Client
+app = Client
 
-# Temporary storage for URLs
-URL_STORAGE = {}
-
-# Download folder
-DOWNLOAD_FOLDER = "downloads"
-os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
-
-# Start Command
 @bot.on_message(filters.command("start"))
 async def start_command(client: Client, message: Message):
     buttons = [[
@@ -30,63 +22,63 @@ async def start_command(client: Client, message: Message):
     )
 
 from pyrogram import Client, filters
+import moviepy.editor as mp
+from PIL import Image, ImageDraw, ImageFont
 import os
-import youtube_dl
 
-# Command to download video
-@Client.on_message(filters.command("download") & filters.private)
-async def download_video(client, message):
-    try:
-        # Extracting video URL and quality from command
-        args = message.text.split()
-        if len(args) < 3:
-            await message.reply_text("Usage: /download <video_url> <quality (e.g., 720p)>")
-            return
+# Create folders if not exists
+if not os.path.exists("videos"):
+    os.makedirs("videos")
 
-        video_url = args[1]
-        quality = args[2]
-        download_path = "./downloads"
-        os.makedirs(download_path, exist_ok=True)
+# Start Command
+@app.on_message(filters.command("start"))
+async def start(client, message):
+    await message.reply("Welcome to Text-to-Video Bot! Send me a text, and I'll create a video for you.")
 
-        # Map quality to format
-        video_format = ''
-        if quality == '144p':
-            video_format = 'dash-8'
-        elif quality == '240p':
-            video_format = 'dash-8'
-        elif quality == '360p':
-            video_format = 'dash-7'
-        elif quality == '480p':
-            video_format = 'dash-6'
-        elif quality == '540p':
-            video_format = 'dash-5'
-        elif quality == '720p':
-            video_format = 'dash-3'
-        elif quality == '1080p':
-            video_format = 'dash-1'
-        else:
-            await message.reply_text("Invalid quality. Use one of: 144p, 240p, 360p, 480p, 540p, 720p, 1080p.")
-            return
+# Text to Video Functionality
+@app.on_message(filters.text & ~filters.command)
+async def text_to_video(client, message):
+    user_text = message.text
+    await message.reply("Processing your video, please wait...")
 
-        ydl_opts = {
-            'format': f'{video_format}[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-            'outtmpl': f'{download_path}/%(title)s.%(ext)s',
-        }
+    # Create video from text
+    video_path = create_video(user_text)
 
-        await message.reply_text("Downloading video, please wait...")
+    # Send the video to user
+    await client.send_video(
+        chat_id=message.chat.id,
+        video=video_path,
+        caption="Here's your video!"
+    )
 
-        # Download video using youtube-dl
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(video_url, download=True)
-            file_name = ydl.prepare_filename(info_dict)
+    # Clean up video
+    os.remove(video_path)
 
-            # Send the downloaded video to the user
-            await message.reply_video(video=file_name, caption="Here is your video!")
+# Video Creation Logic
+def create_video(text):
+    # Create an image
+    img_width, img_height = 1280, 720
+    img = Image.new("RGB", (img_width, img_height), color="black")
+    draw = ImageDraw.Draw(img)
 
-            # Cleanup downloaded file
-            os.remove(file_name)
+    # Add Text to the Image
+    font = ImageFont.truetype("arial.ttf", 40)  # Use any font file
+    text_width, text_height = draw.textsize(text, font=font)
+    text_x = (img_width - text_width) // 2
+    text_y = (img_height - text_height) // 2
+    draw.text((text_x, text_y), text, fill="white", font=font)
 
-    except Exception as e:
-        await message.reply_text(f"An error occurred: {str(e)}")
+    # Save the image
+    image_path = "videos/temp_image.png"
+    img.save(image_path)
 
+    # Create a video clip from the image
+    clip = mp.ImageClip(image_path, duration=5)  # 5 seconds video
+    clip = clip.set_fps(24).set_audio(None)  # No audio
+    video_path = "videos/output_video.mp4"
+    clip.write_videofile(video_path, codec="libx264")
 
+    # Clean up temporary image
+    os.remove(image_path)
+
+    return video_path
